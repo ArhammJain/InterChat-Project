@@ -1,4 +1,3 @@
-// pages/api/auth/login.js
 import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { signToken, setAuthCookie } from '../../../lib/auth';
@@ -35,7 +34,7 @@ export default async function handler(req, res) {
     }
 
     const token = signToken({ id: user.id, username: user.username });
-    setAuthCookie(res, token); // 👈 sets HttpOnly cookie
+    setAuthCookie(res, token);
 
     return res.status(200).json({ user: { id: user.id, username: user.username } });
   } catch (err) {

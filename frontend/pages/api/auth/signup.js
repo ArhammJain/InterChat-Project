@@ -1,4 +1,3 @@
-// pages/api/auth/signup.js
 import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { signToken, setAuthCookie } from '../../../lib/auth';
@@ -13,38 +12,37 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'username and password required' });
     }
 
-    // Check if username exists
-    const { data: existingUsers, error: userError } = await supabaseAdmin
+    const { data: existing, error: existingErr } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('username', username);
 
-    if (userError) {
-      console.error(userError);
+    if (existingErr) {
+      console.error(existingErr);
       return res.status(500).json({ error: 'db error' });
     }
 
-    if (existingUsers && existingUsers.length > 0) {
+    if (existing && existing.length > 0) {
       return res.status(409).json({ error: 'Username already taken' });
     }
 
     const hash = await bcrypt.hash(password, 10);
 
-    const { data: inserted, error: insertError } = await supabaseAdmin
+    const { data: inserted, error: insertErr } = await supabaseAdmin
       .from('users')
       .insert({ username, password_hash: hash })
       .select('id, username')
       .single();
 
-    if (insertError) {
-      console.error(insertError);
+    if (insertErr) {
+      console.error(insertErr);
       return res.status(500).json({ error: 'db insert error' });
     }
 
     const token = signToken({ id: inserted.id, username: inserted.username });
     setAuthCookie(res, token);
 
-    return res.json({ user: { id: inserted.id, username: inserted.username } });
+    return res.status(200).json({ user: { id: inserted.id, username: inserted.username } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'server error' });

@@ -31,10 +31,12 @@ export function setAuthCookie(res, token) {
 }
 
 export function clearAuthCookie(res) {
+  const isProd = process.env.NODE_ENV === 'production';
+
   const cookie = serialize('token', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/',
     maxAge: 0,
   });
@@ -45,6 +47,7 @@ export function clearAuthCookie(res) {
 export function getUserFromRequest(req) {
   const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const token = cookies.token;
+
   if (!token) return null;
 
   try {

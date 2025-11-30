@@ -35,9 +35,9 @@ export default async function handler(req, res) {
     }
 
     const token = signToken({ id: user.id, username: user.username });
-    setAuthCookie(res, token);
+    setAuthCookie(res, token); // 👈 sets HttpOnly cookie
 
-    return res.json({ user: { id: user.id, username: user.username } });
+    return res.status(200).json({ user: { id: user.id, username: user.username } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'server error' });

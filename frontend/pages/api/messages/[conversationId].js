@@ -1,4 +1,4 @@
-// pages/api/messages/[conversationId].js
+// frontend/pages/api/messages/[conversationId].js
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { getUserFromRequest } from '../../../lib/auth';
 
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid conversationId' });
   }
 
-  // ensure user is participant
+  // ensure user is a participant of the conversation
   const { data: part, error: partErr } = await supabaseAdmin
     .from('participants')
     .select('id')
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     try {
       const { data, error } = await supabaseAdmin
         .from('messages')
-        .select('id, sender_id, content, created_at')
+        .select('id, sender_id, content, created_at, users ( username )')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -41,7 +41,15 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'db error', details: error.message });
       }
 
-      return res.status(200).json({ messages: data || [] });
+      const mapped = (data || []).map((m) => ({
+        id: m.id,
+        sender_id: m.sender_id,
+        content: m.content,
+        created_at: m.created_at,
+        sender_username: m.users?.username || null,
+      }));
+
+      return res.status(200).json({ messages: mapped });
     } catch (err) {
       console.error('GET /messages exception:', err);
       return res.status(500).json({ error: 'server error' });
@@ -71,7 +79,12 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'db error', details: error.message });
       }
 
-      return res.status(200).json({ message: data });
+      const message = {
+        ...data,
+        sender_username: me.username,
+      };
+
+      return res.status(200).json({ message });
     } catch (err) {
       console.error('POST /messages exception:', err);
       return res.status(500).json({ error: 'server error' });

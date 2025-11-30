@@ -1,8 +1,8 @@
 // frontend/pages/chat.js
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabaseClient'; // make sure this file exists
 
-// Simple avatar (same visual idea as before)
 function Avatar({ name, size = 40 }) {
   const initial = name && name[0] ? name[0].toUpperCase() : '?';
   return (
@@ -41,7 +41,7 @@ export default function ChatPage() {
   const activeConvRef = useRef(null);
   const searchRef = useRef(null);
 
-  // 🔐 Auth check + initial data load
+  // 🔐 Check auth + initial load
   useEffect(() => {
     setMounted(true);
 
@@ -72,7 +72,7 @@ export default function ChatPage() {
     init();
   }, [router]);
 
-  // track active conversation for scrolling logic
+  // Track active conversation, close sidebar on mobile
   useEffect(() => {
     activeConvRef.current = activeConv?.id ?? null;
 
@@ -81,7 +81,7 @@ export default function ChatPage() {
     }
   }, [activeConv]);
 
-  // 🔍 Search users by username
+  // 🔍 User search
   useEffect(() => {
     const t = setTimeout(() => {
       if (!searchQ.trim()) {
@@ -179,7 +179,7 @@ export default function ChatPage() {
       alert('Could not load messages');
     }
 
-    // Refresh list (for last_message preview)
+    // refresh list to update last_message preview
     loadConversations().catch(() => {});
   }
 
@@ -237,7 +237,15 @@ export default function ChatPage() {
       const data = await res.json();
       const msg = data.message || data;
 
-      setMessages((prev) => [...prev, msg]);
+      const msgWithName = {
+        ...msg,
+        sender_username: user.username,
+      };
+
+      setMessages((prev) => {
+        if (prev.some((x) => x.id === msgWithName.id)) return prev;
+        return [...prev, msgWithName];
+      });
 
       setTimeout(() => {
         if (messagesRef.current) {
@@ -273,6 +281,55 @@ export default function ChatPage() {
     }
     router.replace('/login');
   }
+
+  // 🔴 Realtime subscription for new messages
+  useEffect(() => {
+    if (!activeConv?.id || !user) return;
+
+    const convId = activeConv.id;
+
+    const channel = supabase
+      .channel(`messages_conv_${convId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${convId}`,
+        },
+        (payload) => {
+          const m = payload.new;
+          if (!m) return;
+
+          const mine = m.sender_id === user.id;
+
+          const msgWithName = {
+            id: m.id,
+            sender_id: m.sender_id,
+            content: m.content,
+            created_at: m.created_at,
+            sender_username: mine ? user.username : activeConv.name,
+          };
+
+          setMessages((prev) => {
+            if (prev.some((x) => x.id === msgWithName.id)) return prev;
+            return [...prev, msgWithName];
+          });
+
+          setTimeout(() => {
+            if (messagesRef.current) {
+              messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+            }
+          }, 40);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeConv?.id, user, activeConv?.name]);
 
   if (!mounted || loadingInitial) {
     return <div>Loading chat...</div>;
@@ -393,8 +450,8 @@ export default function ChatPage() {
 
         <div className="messages" ref={messagesRef}>
           {messages.map((m) => {
-            const mine = m.sender_id === user?.id || m.sender === user?.username;
-            const senderName = m.sender || (mine ? user?.username : 'User');
+            const mine = m.sender_id === user?.id;
+            const senderName = m.sender_username || (mine ? user?.username : 'User');
             return (
               <div key={m.id} className={`msg-row ${mine ? 'mine' : ''}`}>
                 <div className="msg-avatar">

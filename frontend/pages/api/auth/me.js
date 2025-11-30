@@ -1,0 +1,9 @@
+// pages/api/auth/me.js
+import { getUserFromRequest } from '../../../lib/auth';
+
+export default function handler(req, res) {
+  const user = getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: 'No token' });
+
+  return res.json({ user });
+}

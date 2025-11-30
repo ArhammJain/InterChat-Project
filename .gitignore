@@ -1,0 +1,39 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Build artifacts
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.obj
+*.exe
+*.dll
+*.so
+*.o
+*.pyc
+*.class
+target/
+build/
+dist/
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# Dependencies
+node_modules/
+vendor/
+venv/
+
+# Environment variables
+.env
+.env.*

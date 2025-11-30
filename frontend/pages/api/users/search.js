@@ -1,18 +1,13 @@
-// frontend/pages/api/users/search.js
+// pages/api/users/search.js
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { getUserFromRequest } from '../../../lib/auth';
 
 export default async function handler(req, res) {
-  // Only allow GET
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET')
     return res.status(405).json({ error: 'Method not allowed' });
-  }
 
-  // Require logged-in user
   const me = getUserFromRequest(req);
-  if (!me) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!me) return res.status(401).json({ error: 'Unauthorized' });
 
   const query = (req.query.query || '').toString().trim();
 
@@ -32,7 +27,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'db error', details: error.message });
     }
 
-    // data is an array of users
     return res.status(200).json({ users: data || [] });
   } catch (err) {
     console.error('users/search exception:', err);

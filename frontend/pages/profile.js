@@ -1,6 +1,5 @@
 // frontend/pages/profile.js
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import Router from 'next/router';
 
 const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
@@ -20,7 +19,11 @@ export default function ProfilePage() {
 
   async function loadMe() {
     try {
-      const res = await axios.get(`${API_HOST}/api/users/me`, { withCredentials: true });
+await fetch('/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username, password }),
+});
       setUser(res.data.user);
     } catch (e) {
       console.error('load me error', e);

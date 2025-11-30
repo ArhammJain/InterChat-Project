@@ -1,7 +1,6 @@
 // frontend/pages/chat.js
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import { io } from "socket.io-client";
+
 
 const API_HOST =
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
@@ -78,14 +77,14 @@ export default function ChatPage() {
     let mounted = true;
     async function init() {
       try {
-        const me = await axios.get(`${API_HOST}/api/auth/me`, { withCredentials: true });
+        const me = await fetch(`${API_HOST}/api/auth/me`, { withCredentials: true });
         if (!mounted) return;
         setUser(me.data.user);
 
         socketRef.current = io(API_HOST, { withCredentials: true });
         socketRef.current.on("connect", async () => {
           try {
-            const tk = await axios.get(`${API_HOST}/api/auth/token`, { withCredentials: true });
+            const tk = await fetch(`${API_HOST}/api/auth/token`, { withCredentials: true });
             if (tk.data?.token) socketRef.current.emit("auth", { token: tk.data.token });
           } catch {}
         });
@@ -128,7 +127,7 @@ export default function ChatPage() {
       if (!searchQ.trim()) return setSearchResults([]);
       (async () => {
         try {
-          const res = await axios.get(`${API_HOST}/api/users/search`, {
+          const res = await fetch(`${API_HOST}/api/users/search`, {
             params: { query: searchQ },
             withCredentials: true,
           });
@@ -143,7 +142,7 @@ export default function ChatPage() {
 
   async function loadConversations(autoOpenFirst = false) {
     try {
-      const res = await axios.get(`${API_HOST}/api/conversations`, { withCredentials: true });
+      const res = await fetch(`${API_HOST}/api/conversations`, { withCredentials: true });
       setConversations(res.data || []);
       if (autoOpenFirst && res.data && res.data.length) {
         const first = res.data[0];
@@ -162,7 +161,7 @@ export default function ChatPage() {
       if (socketRef.current) socketRef.current.emit("join", { conversationId: convId });
     } catch {}
     try {
-      const msgs = await axios.get(`${API_HOST}/api/messages/${convId}`, { withCredentials: true });
+      const msgs = await fetch(`${API_HOST}/api/messages/${convId}`, { withCredentials: true });
       setMessages(msgs.data || []);
       setTimeout(() => {
         if (messagesRef.current) messagesRef.current.scrollTop = messagesRef.current.scrollHeight;

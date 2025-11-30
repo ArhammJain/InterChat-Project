@@ -1,6 +1,6 @@
 // frontend/pages/login.js
+
 import { useState } from 'react';
-import axios from 'axios';
 import Router from 'next/router';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -16,7 +16,11 @@ export default function Login() {
     if (!password) return alert('Enter password');
     try {
       setBusy(true);
-      await axios.post(`${API}/api/auth/login`, { username: username.trim(), password }, { withCredentials: true });
+await fetch('/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username, password }),
+});
       Router.push('/chat');
     } catch (err) {
       console.error(err);

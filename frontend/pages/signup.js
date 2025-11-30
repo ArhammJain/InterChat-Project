@@ -1,6 +1,5 @@
 // frontend/pages/signup.js
 import { useState } from 'react';
-import axios from 'axios';
 import Router from 'next/router';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -18,7 +17,11 @@ export default function Signup() {
     try {
       setBusy(true);
       // Signup JSON call
-      await axios.post(`${API}/api/auth/signup`, { username: username.trim(), password }, { withCredentials: true });
+await fetch('/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username, password }),
+});
 
       // If avatar file selected, upload it
       if (avatarFile) {

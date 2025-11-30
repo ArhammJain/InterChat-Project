@@ -1,9 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/signup": "pages/signup.js",
-  "/login": "pages/login.js",
-  "/chat": "pages/chat.js"
-}
+{"/_error":"pages/_error.js","/api/auth/login":"pages/api/auth/login.js","/api/auth/signup":"pages/api/auth/signup.js","/api/auth/logout":"pages/api/auth/logout.js","/api/auth/me":"pages/api/auth/me.js","/api/messages/[conversationId]":"pages/api/messages/[conversationId].js","/":"pages/index.html","/chat":"pages/chat.html","/login":"pages/login.html","/signup":"pages/signup.html","/profile":"pages/profile.html","/_app":"pages/_app.js","/_document":"pages/_document.js","/404":"pages/404.html"}

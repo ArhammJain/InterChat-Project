@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+// Simple avatar (same visual idea as before)
 function Avatar({ name, size = 40 }) {
   const initial = name && name[0] ? name[0].toUpperCase() : '?';
   return (
@@ -25,7 +26,7 @@ function Avatar({ name, size = 40 }) {
 export default function ChatPage() {
   const router = useRouter();
 
-  const [mounted, setMounted] = useState(false); // avoid hydration issues
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -40,7 +41,7 @@ export default function ChatPage() {
   const activeConvRef = useRef(null);
   const searchRef = useRef(null);
 
-  // 🔐 Check auth + load first data
+  // 🔐 Auth check + initial data load
   useEffect(() => {
     setMounted(true);
 
@@ -71,7 +72,7 @@ export default function ChatPage() {
     init();
   }, [router]);
 
-  // Keep active conversation id in ref
+  // track active conversation for scrolling logic
   useEffect(() => {
     activeConvRef.current = activeConv?.id ?? null;
 
@@ -80,7 +81,7 @@ export default function ChatPage() {
     }
   }, [activeConv]);
 
-  // 🔍 Search users (simple polling)
+  // 🔍 Search users by username
   useEffect(() => {
     const t = setTimeout(() => {
       if (!searchQ.trim()) {
@@ -96,7 +97,11 @@ export default function ChatPage() {
             credentials: 'include',
           });
 
-          if (!res.ok) return;
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            console.error('search error:', data);
+            return;
+          }
 
           const data = await res.json();
           const users = data.users || data || [];
@@ -118,7 +123,8 @@ export default function ChatPage() {
       });
 
       if (!res.ok) {
-        console.error('loadConversations status', res.status);
+        const data = await res.json().catch(() => ({}));
+        console.error('loadConversations error:', data);
         return;
       }
 
@@ -130,11 +136,12 @@ export default function ChatPage() {
         const first = convs[0];
         await openConversation({
           id: first.id,
-          name: first.other_username || first.name || `#${first.id}`,
+          other_username: first.other_username,
+          name: first.name || first.other_username || `#${first.id}`,
         });
       }
     } catch (e) {
-      console.error('loadConversations error', e);
+      console.error('loadConversations exception', e);
     }
   }
 
@@ -152,7 +159,9 @@ export default function ChatPage() {
       });
 
       if (!res.ok) {
-        console.error('fetch messages status', res.status);
+        const data = await res.json().catch(() => ({}));
+        console.error('fetch messages error:', data);
+        alert(data.error || 'Could not load messages');
         return;
       }
 
@@ -166,10 +175,11 @@ export default function ChatPage() {
         }
       }, 40);
     } catch (e) {
-      console.error('fetch messages error', e);
+      console.error('fetch messages exception', e);
+      alert('Could not load messages');
     }
 
-    // Refresh list (last message preview, etc.)
+    // Refresh list (for last_message preview)
     loadConversations().catch(() => {});
   }
 
@@ -183,12 +193,14 @@ export default function ChatPage() {
       });
 
       if (!res.ok) {
-        console.error('create conversation status', res.status);
+        const data = await res.json().catch(() => ({}));
+        console.error('open conv error:', data);
+        alert(data.error || 'Could not open conversation');
         return;
       }
 
       const data = await res.json();
-      const convId = data.id || data.conversation?.id;
+      const convId = data.id;
 
       await openConversation({
         id: convId,
@@ -199,7 +211,8 @@ export default function ChatPage() {
       setSearchResults([]);
       loadConversations().catch(() => {});
     } catch (e) {
-      console.error('open conv error', e);
+      console.error('open conv exception', e);
+      alert('Could not open conversation');
     }
   }
 
@@ -207,8 +220,6 @@ export default function ChatPage() {
     if (!conversationId || !content || !user) return;
 
     try {
-      setText('');
-
       const res = await fetch(`/api/messages/${conversationId}`, {
         method: 'POST',
         credentials: 'include',
@@ -217,7 +228,9 @@ export default function ChatPage() {
       });
 
       if (!res.ok) {
-        console.error('send message status', res.status);
+        const data = await res.json().catch(() => ({}));
+        console.error('send message error:', data);
+        alert(data.error || 'Could not send message');
         return;
       }
 
@@ -232,14 +245,17 @@ export default function ChatPage() {
         }
       }, 40);
     } catch (e) {
-      console.error('send message error', e);
+      console.error('send message exception', e);
+      alert('Could not send message');
     }
   }
 
   async function handleSend(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (!text.trim() || !activeConv) return;
-    await sendMessage(activeConv.id, text);
+    const content = text;
+    setText('');
+    await sendMessage(activeConv.id, content);
   }
 
   function toggleSidebar() {
@@ -255,7 +271,6 @@ export default function ChatPage() {
     } catch (e) {
       console.error('logout error', e);
     }
-
     router.replace('/login');
   }
 
@@ -264,7 +279,6 @@ export default function ChatPage() {
   }
 
   if (!user) {
-    // If user disappears for some reason, fallback
     return null;
   }
 
@@ -306,8 +320,14 @@ export default function ChatPage() {
 
           <div className="scroll" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {searchResults.map((u) => (
-              <div key={u.id} className="conv-item" onClick={() => onUserClick(u)}>
-                <div className="avatar">{u.username.charAt(0).toUpperCase()}</div>
+              <div
+                key={u.id}
+                className="conv-item"
+                onClick={() => onUserClick(u)}
+              >
+                <div className="avatar">
+                  {u.username.charAt(0).toUpperCase()}
+                </div>
                 <div style={{ flex: 1 }}>{u.username}</div>
               </div>
             ))}
@@ -365,7 +385,9 @@ export default function ChatPage() {
             style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <Avatar name={user?.username} size={36} />
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>{user?.username}</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+              {user?.username}
+            </div>
           </div>
         </div>
 
@@ -375,7 +397,9 @@ export default function ChatPage() {
             const senderName = m.sender || (mine ? user?.username : 'User');
             return (
               <div key={m.id} className={`msg-row ${mine ? 'mine' : ''}`}>
-                <div className="msg-avatar">{senderName.charAt(0).toUpperCase()}</div>
+                <div className="msg-avatar">
+                  {senderName.charAt(0).toUpperCase()}
+                </div>
                 <div className="msg-body">
                   <div className="msg-author">{senderName}</div>
                   <div className="msg-bubble">{m.content}</div>

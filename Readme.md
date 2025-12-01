@@ -45,13 +45,64 @@ cd frontend
 npm install
 ```
 
-<p>3. Set Up Supabase Database</p>
+<p>3. Set Up Supabase Database ( Copy and Paste this qurie to Supabase SQL Editor )</p>
 
 ```
-i will add schema soon
+-- Drop old tables if they exist (optional, for fresh setup)
+drop table if exists participants cascade;
+drop table if exists messages cascade;
+drop table if exists conversations cascade;
+drop table if exists users cascade;
+
+-- USERS TABLE
+create table users (
+  id bigserial primary key,
+  username text not null unique,
+  password_hash text not null,
+  avatar text,
+  created_at timestamptz default now()
+);
+
+-- CONVERSATIONS TABLE
+create table conversations (
+  id bigserial primary key,
+  name text,
+  is_group boolean default false,
+  created_at timestamptz default now()
+);
+
+-- PARTICIPANTS TABLE
+create table participants (
+  id bigserial primary key,
+  conversation_id bigint not null references conversations(id) on delete cascade,
+  user_id bigint not null references users(id) on delete cascade,
+  joined_at timestamptz default now()
+);
+
+-- MESSAGES TABLE
+create table messages (
+  id bigserial primary key,
+  conversation_id bigint not null references conversations(id) on delete cascade,
+  sender_id bigint references users(id) on delete set null,
+  content text,
+  type text default 'text',
+  created_at timestamptz default now()
+);
+
+-- (Recommended) Disable RLS for now
+alter table users disable row level security;
+alter table conversations disable row level security;
+alter table participants disable row level security;
+alter table messages disable row level security;
+
 ```
 
-<p>4. Create Environment File</p>
+<p>4. Enable Realtime</p>
+
+Go to:
+Database → Replication → Realtime → Enable on public.messages
+
+<p>5. Create Environment File</p>
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -60,7 +111,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_key
 JWT_SECRET=your_random_secret_key
 ```
 
-<p>5. Start Development Server</p>
+<p>6. Start Development Server</p>
 
 ```
 npm run dev

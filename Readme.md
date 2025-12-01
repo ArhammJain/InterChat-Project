@@ -6,8 +6,6 @@
 
 <p align="center"><img src="&lt;p align=" left"=""> <img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&amp;logo=next.js"> <img src="https://img.shields.io/badge/Supabase-Realtime-3ECF8E?style=for-the-badge&amp;logo=supabase&amp;logoColor=white"> <img src="https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&amp;logo=node.js"> <img src="https://img.shields.io/badge/Database-PostgreSQL-blue?style=for-the-badge&amp;logo=postgresql"> <img src="https://img.shields.io/badge/Deployment-Vercel-black?style=for-the-badge&amp;logo=vercel"> <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge"></p>
 
-" alt="shields"/>
-
 <h2>🚀 Demo</h2>
 
 [https://interchatbyarham.vercel.app/login](https://interchatbyarham.vercel.app/login)
@@ -34,16 +32,33 @@ Here're some of the project's best features:
 ```
 git clone https://github.com/your-username/your-repo.git
 ```
+```
+cd your-repo
+```
 
-<p>2. Install Dependencies inside Frontend Folder</p>
+<p>2. Install Dependencies</p>
 
+```
+cd frontend
+```
 ```
 npm install
 ```
 
 <p>3. Set Up Supabase Database</p>
 
+```
+i will add schema soon
+```
+
 <p>4. Create Environment File</p>
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
+JWT_SECRET=your_random_secret_key
+```
 
 <p>5. Start Development Server</p>
 
